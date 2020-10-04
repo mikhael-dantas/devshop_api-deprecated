@@ -7,13 +7,20 @@ export default class ProductsController {
   public async index ({ request, response }: HttpContextContract) {
     try {
       const params = request.only(['id', 'name'])
-      let { page, pagination } = request.only(['page', 'pagination'])
+      let { page, pagination, sort, order } = request.only(['page', 'pagination', 'sort', 'order'])
+
       if (!page) {
         page = 1
       }
+
+      if (!sort) {
+        sort = 'name'
+        order = 'asc'
+      }
+
       const productQuery = await Product.query()
         .where(params)
-        .orderBy('price', 'desc')
+        .orderBy(sort, order)
         .paginate(page, pagination)
 
       return productQuery
