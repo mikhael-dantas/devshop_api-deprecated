@@ -1,31 +1,56 @@
 /* eslint-disable max-len */
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import { schema, rules } from '@ioc:Adonis/Core/Validator'
 
 import Product from 'App/Models/Product'
 
 export default class ProductsController {
+  private returnOrderString (order:any) {
+    switch (order) {
+      case 'asc':
+        return 'asc'
+      case 'desc':
+        return 'desc'
+      default:
+        return 'asc'
+    }
+  }
   public async index ({ request, response }: HttpContextContract) {
     try {
-      const params = request.only(['id', 'name'])
-      let { page, pagination, sort, order } = request.only(['page', 'pagination', 'sort', 'order'])
+      const productsSchema = schema.create({
+        id: schema.number.optional(),
+        page: schema.number.optional(),
+        pagination: schema.number.optional([rules.range(2, 100)]),
+        order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
+        sort: schema.string.optional({}, [rules.regex(/^(price|name)$/), rules.requiredIfExists('order')]),
+      })
 
-      if (!page) {
-        page = 1
+      const validatedData = await request.validate({schema: productsSchema})
+
+      // set default values and params
+      if (!validatedData.page) {
+        validatedData.page = 1
       }
 
-      if (!sort) {
-        sort = 'name'
-        order = 'asc'
+      if (!validatedData.sort) {
+        validatedData.sort = 'name'
+        validatedData.order = 'asc'
       }
 
+      const params = {}
+      if (validatedData.id) {
+        params['id'] = validatedData.id
+      }
+
+      // query
       const productQuery = await Product.query()
         .where(params)
-        .orderBy(sort, order)
-        .paginate(page, pagination)
+        .orderBy(validatedData.sort, this.returnOrderString(validatedData.order))
+        .paginate(validatedData.page, validatedData.pagination)
 
       return productQuery
     } catch (error) {
-      response.status(error.status)
+      response.status(error.status).send(error.messages)
     }
   }
 
