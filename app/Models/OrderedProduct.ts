@@ -8,6 +8,18 @@ export default class OrderedProduct extends BaseModel {
   public id: number
 
   @column()
+  public purchased_price: number
+
+  @column()
+  public product_name: string
+
+  @column()
+  public product_description: string
+
+  @column()
+  public qty: number
+
+  @column()
   public productId: number
 
   @column()

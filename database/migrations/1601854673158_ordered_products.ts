@@ -11,7 +11,7 @@ export default class OrderedProducts extends BaseSchema {
       table.integer('purchased_price')
       table.string('product_name')
       table.string('product_description')
-      table.string('qty')
+      table.integer('qty')
       table.timestamps(true)
     })
   }
