@@ -12,6 +12,7 @@ export default class ServiceOrdersController {
   }
 
   public async store ({ request, response }: HttpContextContract) {
+    // define schema for the request params and validate
     const serviceOrderSchema = schema.create({
       products: schema.array().members(schema.object().members({
         product_id: schema.number(),
@@ -21,47 +22,51 @@ export default class ServiceOrdersController {
 
     const validatedData = await request.validate({schema: serviceOrderSchema})
 
-    await Database.transaction(async trx => {
-      // create status
-      const orderStatus = await OrderStatus.create({statusCode: 0}, trx)
+    await Database.transaction(async (trx) => {
+      // create order status
+      const orderStatus = new OrderStatus()
+      orderStatus.statusCode = 0
+      orderStatus.useTransaction(trx)
 
-      // create serviceOrder
+      const orderStatusSaved = await orderStatus.save()
+
+      // service order opening
       const serviceOrder = new ServiceOrder()
-      serviceOrder.orderStatusId = orderStatus.id
+      serviceOrder.orderStatusId = orderStatusSaved.id
       serviceOrder.useTransaction(trx)
 
-      // sum of all values and create order
-      let orderedProductsTotalValue = 0
-      await Promise.all(validatedData.products.map(async orderedProduct => {
-        const product = await Product.findBy('id', orderedProduct.product_id)
+      const serviceOrderSaved = await serviceOrder.save()
+
+      // calculate and create orderedProducts
+      let totalValue = 0
+      await Promise.all(validatedData.products.map(async orderedProductData => {
+        const product = await Product.findBy('id', orderedProductData.product_id)
         if (!product) {
-          throw new Error()
+          throw new Error('')
         }
-        orderedProductsTotalValue = orderedProductsTotalValue + product.price * orderedProduct.qty
+        // increment totalvalue by the price times quantity
+        totalValue += product.price * orderedProductData.qty
 
-        // create orderedProducts
-        const createdOrderedProduct = await OrderedProduct.create(
-          {
-            productId: orderedProduct.product_id,
-            qty: orderedProduct.qty,
-            serviceOrderId: serviceOrder.id,
-          }, trx
-        )
+        // generating orderedProducts
+        const orderedProduct = new OrderedProduct()
 
-        return createdOrderedProduct
+        orderedProduct.serviceOrderId = serviceOrderSaved.id
+        orderedProduct.productId = orderedProductData.product_id
+        orderedProduct.qty = orderedProductData.qty
+        orderedProduct.product_name = product.name
+        orderedProduct.product_description = product.description
+        orderedProduct.purchased_price = product.price
+
+        orderedProduct.useTransaction(trx)
+        await orderedProduct.save()
+        return orderedProduct
       }))
 
-      serviceOrder.total_value = orderedProductsTotalValue
+      // Closing serviceOrder
+      serviceOrderSaved.total_value = totalValue
+      await serviceOrderSaved.save()
 
-      await serviceOrder.save()
-
-      try {
-        trx.commit()
-        return response.send(serviceOrder)
-      } catch (error) {
-        trx.rollback()
-        return response.send(error)
-      }
+      response.status(200).send(serviceOrderSaved)
     })
   }
 }
