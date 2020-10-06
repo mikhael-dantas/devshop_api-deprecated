@@ -5,6 +5,7 @@ import OrderedProduct from 'App/Models/OrderedProduct'
 import OrderStatus from 'App/Models/OrderStatus'
 import Product from 'App/Models/Product'
 import ServiceOrder from 'App/Models/ServiceOrder'
+import Wallet from 'App/Models/Wallet'
 
 export default class ServiceOrdersController {
   public async index () {
@@ -47,6 +48,16 @@ export default class ServiceOrdersController {
         // increment totalvalue by the price times quantity
         totalValue += product.price * orderedProductData.qty
 
+        // remove from stock
+        if (product.stock_qty < orderedProductData.qty) {
+          throw new Error('')
+        }
+
+        product.stock_qty -= orderedProductData.qty
+        product.useTransaction(trx)
+
+        await product.save()
+
         // generating orderedProducts
         const orderedProduct = new OrderedProduct()
 
@@ -66,7 +77,23 @@ export default class ServiceOrdersController {
       serviceOrderSaved.total_value = totalValue
       await serviceOrderSaved.save()
 
-      response.status(200).send(serviceOrderSaved)
+      const wallet = await Wallet.findBy('id', 1)
+
+      if (!wallet) {
+        throw new Error('')
+      }
+
+      if (wallet.money_qty < serviceOrderSaved.total_value) {
+        throw new Error('')
+      }
+
+      wallet.money_qty -= serviceOrderSaved.total_value
+
+      wallet.useTransaction(trx)
+
+      await wallet.save()
+
+      response.status(200).send(wallet)
     })
   }
 }
