@@ -1,5 +1,6 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import { schema } from '@ioc:Adonis/Core/Validator'
+import { schema , rules} from '@ioc:Adonis/Core/Validator'
+
 import Database from '@ioc:Adonis/Lucid/Database'
 import OrderedProduct from 'App/Models/OrderedProduct'
 import OrderStatus from 'App/Models/OrderStatus'
@@ -8,8 +9,52 @@ import ServiceOrder from 'App/Models/ServiceOrder'
 import Wallet from 'App/Models/Wallet'
 
 export default class ServiceOrdersController {
-  public async index () {
-    return await ServiceOrder.query().preload('orderStatus').preload('orderedProducts')
+  private returnOrderString (order:any) {
+    switch (order) {
+      case 'asc':
+        return 'asc'
+      case 'desc':
+        return 'desc'
+      default:
+        return 'asc'
+    }
+  }
+
+  public async index ({request}: HttpContextContract) {
+    const productsSchema = schema.create({
+      id: schema.number.optional(),
+      page: schema.number.optional(),
+      pagination: schema.number.optional([rules.range(2, 100)]),
+      order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
+      sort: schema.string.optional({}, [rules.regex(/^(created_at|total_value)$/), rules.requiredIfExists('order')]),
+    })
+
+    const validatedData = await request.validate({schema: productsSchema})
+
+    // set default values and params
+    if (!validatedData.page) {
+      validatedData.page = 1
+    }
+
+    if (!validatedData.sort) {
+      validatedData.sort = 'created_at'
+      validatedData.order = 'desc'
+    }
+
+    const params = {}
+    if (validatedData.id) {
+      params['id'] = validatedData.id
+    }
+
+    // query
+    const productQuery = await ServiceOrder.query()
+      .preload('orderStatus')
+      .preload('orderedProducts')
+      .where(params)
+      .orderBy(validatedData.sort, this.returnOrderString(validatedData.order))
+      .paginate(validatedData.page, validatedData.pagination)
+
+    return productQuery
   }
 
   public async store ({ request, response }: HttpContextContract) {
