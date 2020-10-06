@@ -23,6 +23,10 @@ export default class ServiceOrdersController {
 
     const validatedData = await request.validate({schema: serviceOrderSchema})
 
+    const errorTypeTrack = {
+      status: 0,
+      message: '',
+    }
     await Database.transaction(async (trx) => {
       // create order status
       const orderStatus = new OrderStatus()
@@ -43,6 +47,8 @@ export default class ServiceOrdersController {
       await Promise.all(validatedData.products.map(async orderedProductData => {
         const product = await Product.findBy('id', orderedProductData.product_id)
         if (!product) {
+          errorTypeTrack.status = 400
+          errorTypeTrack.message = `id in product with id ${orderedProductData.product_id}`
           throw new Error('')
         }
         // increment totalvalue by the price times quantity
@@ -50,6 +56,8 @@ export default class ServiceOrdersController {
 
         // remove from stock
         if (product.stock_qty < orderedProductData.qty) {
+          errorTypeTrack.status = 400
+          errorTypeTrack.message = `qty in product with id ${orderedProductData.product_id}`
           throw new Error('')
         }
 
@@ -80,10 +88,14 @@ export default class ServiceOrdersController {
       const wallet = await Wallet.findBy('id', 1)
 
       if (!wallet) {
+        errorTypeTrack.status = 400
+        errorTypeTrack.message = 'wallet do not exist'
         throw new Error('')
       }
 
       if (wallet.money_qty < serviceOrderSaved.total_value) {
+        errorTypeTrack.status = 400
+        errorTypeTrack.message = 'insuficient money'
         throw new Error('')
       }
 
@@ -94,6 +106,11 @@ export default class ServiceOrdersController {
       await wallet.save()
 
       response.status(200).send(wallet)
+    }).catch(() => {
+      if (errorTypeTrack.status === 0) {
+        return response.status(500)
+      }
+      return response.status(errorTypeTrack.status).json({message: errorTypeTrack.message})
     })
   }
 }
