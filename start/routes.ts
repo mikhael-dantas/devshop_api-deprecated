@@ -28,5 +28,5 @@ Route.delete('/products/:id', 'ProductsController.index')
 Route.get('/serviceorders', 'ServiceOrdersController.index')
 Route.post('/serviceorders', 'ServiceOrdersController.store')
 
-Route.get('/wallets', 'WalletsController.index')
-Route.post('/wallets', 'WalletsController.store')
+Route.get('/users', 'UsersController.index')
+Route.post('/users', 'UsersController.store')
