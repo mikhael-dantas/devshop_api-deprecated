@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { BaseModel, BelongsTo, belongsTo, column, HasMany, hasMany } from '@ioc:Adonis/Lucid/Orm'
 import OrderStatus from './OrderStatus'
 import OrderedProduct from './OrderedProduct'
+import User from './User'
 
 export default class ServiceOrder extends BaseModel {
   @column({ isPrimary: true })
@@ -12,6 +13,12 @@ export default class ServiceOrder extends BaseModel {
 
   @column()
   public total_value: number
+
+  @column()
+  public userId: number
+
+  @belongsTo(() => User)
+  public user: BelongsTo<typeof User>
 
   @hasMany(() => OrderedProduct)
   public orderedProducts: HasMany<typeof OrderedProduct>
