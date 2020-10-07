@@ -5,13 +5,13 @@ export default class OrderedProducts extends BaseSchema {
 
   public async up () {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
-      table.integer('product_id').references('id').inTable('products')
-      table.integer('service_order_id').references('id').inTable('service_orders')
-      table.integer('purchased_price')
-      table.string('product_name')
+      table.increments('id').notNullable()
+      table.integer('product_id').references('id').inTable('products').notNullable()
+      table.integer('service_order_id').references('id').inTable('service_orders').notNullable()
+      table.integer('purchased_price').notNullable()
+      table.string('product_name').notNullable()
       table.string('product_description')
-      table.integer('qty')
+      table.integer('qty').notNullable()
       table.timestamps(true)
     })
   }

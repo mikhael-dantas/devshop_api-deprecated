@@ -5,8 +5,11 @@ export default class ServiceOrders extends BaseSchema {
 
   public async up () {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
-      table.integer('order_status_id').references('id').inTable('order_statuses')
+      table.increments('id').notNullable()
+      table.integer('order_status_id')
+        .references('id')
+        .inTable('order_statuses')
+        .notNullable()
       table.integer('total_value')
       table.timestamps(true)
     })
