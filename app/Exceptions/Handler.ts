@@ -20,4 +20,13 @@ export default class ExceptionHandler extends HttpExceptionHandler {
   constructor () {
     super(Logger)
   }
+
+  public async handle (error, ctx) {
+    if (error.code === 'E_VALIDATION_FAILURE') {
+      return ctx.response.status(422).send(error.messages)
+    }
+    // return ctx.response.status(500)
+
+    return super.handle(error, ctx)
+  }
 }
