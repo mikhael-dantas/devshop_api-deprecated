@@ -11,13 +11,23 @@ export default class UsersController {
 
   public async store ({ response }: HttpContextContract) {
     await Database.transaction(async (trx) => {
+      // generating key and verifying if it exist
+      const keyGen = Math.random().toString(36).substring(2, 15)
+      const userFinded = await User.findBy('key', keyGen)
+
+      if (userFinded) {
+        return response.status(500)
+      }
+
+      // creating user
       const user = new User()
-      user.key = 'kfjds'
+      user.key = keyGen
       user.is_admin = false
 
       user.useTransaction(trx)
       const savedUser = await user.save()
 
+      // creating wallet
       const wallet = new Wallet()
       wallet.money_qty = 10000
       wallet.userId = savedUser.id
@@ -25,7 +35,7 @@ export default class UsersController {
       wallet.useTransaction(trx)
       await wallet.save()
 
-      return savedUser
+      return response.json(savedUser)
     }).catch(() => {
       return response.status(500).json({message: 'user creation failed'})
     })

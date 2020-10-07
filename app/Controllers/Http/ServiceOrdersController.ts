@@ -6,6 +6,7 @@ import OrderedProduct from 'App/Models/OrderedProduct'
 import OrderStatus from 'App/Models/OrderStatus'
 import Product from 'App/Models/Product'
 import ServiceOrder from 'App/Models/ServiceOrder'
+import User from 'App/Models/User'
 import Wallet from 'App/Models/Wallet'
 
 export default class ServiceOrdersController {
@@ -20,8 +21,9 @@ export default class ServiceOrdersController {
     }
   }
 
-  public async index ({request}: HttpContextContract) {
+  public async index ({request, response}: HttpContextContract) {
     const productsSchema = schema.create({
+      user_key: schema.string(),
       id: schema.number.optional(),
       page: schema.number.optional(),
       pagination: schema.number.optional([rules.range(2, 100)]),
@@ -32,6 +34,12 @@ export default class ServiceOrdersController {
     const validatedData = await request.validate({schema: productsSchema})
 
     // set default values and params
+    const user = await User.findBy('key', validatedData.user_key)
+
+    if (!user) {
+      return response.status(401)
+    }
+
     if (!validatedData.page) {
       validatedData.page = 1
     }
@@ -41,7 +49,9 @@ export default class ServiceOrdersController {
       validatedData.order = 'desc'
     }
 
-    const params = {}
+    const params = {
+      userId: user.id,
+    }
     if (validatedData.id) {
       params['id'] = validatedData.id
     }
@@ -60,7 +70,7 @@ export default class ServiceOrdersController {
   public async store ({ request, response }: HttpContextContract) {
     // define schema for the request params and validate
     const serviceOrderSchema = schema.create({
-      user_id: schema.number(),
+      user_key: schema.number(),
       products: schema.array().members(schema.object().members({
         product_id: schema.number(),
         qty: schema.number(),
@@ -75,7 +85,11 @@ export default class ServiceOrdersController {
     }
 
     // sets user id to process his order
-    const userId = validatedData.user_id
+    const user = await User.findBy('key', validatedData.user_key)
+    if (!user) {
+      return response.status(401)
+    }
+    const userId = user.id
 
     await Database.transaction(async (trx) => {
       // create order status
@@ -91,7 +105,7 @@ export default class ServiceOrdersController {
       serviceOrder.userId = userId
       serviceOrder.useTransaction(trx)
 
-      const serviceOrderSaved = await serviceOrder.save()
+      const savedServiceOrder = await serviceOrder.save()
 
       // calculate and create orderedProducts
       let totalValue = 0
@@ -120,7 +134,7 @@ export default class ServiceOrdersController {
         // generating orderedProducts
         const orderedProduct = new OrderedProduct()
 
-        orderedProduct.serviceOrderId = serviceOrderSaved.id
+        orderedProduct.serviceOrderId = savedServiceOrder.id
         orderedProduct.productId = orderedProductData.product_id
         orderedProduct.qty = orderedProductData.qty
         orderedProduct.product_name = product.name
@@ -133,8 +147,8 @@ export default class ServiceOrdersController {
       }))
 
       // Closing serviceOrder
-      serviceOrderSaved.total_value = totalValue
-      await serviceOrderSaved.save()
+      savedServiceOrder.total_value = totalValue
+      await savedServiceOrder.save()
 
       // process payment
       const wallet = await Wallet.findBy('user_id', userId)
@@ -145,19 +159,19 @@ export default class ServiceOrdersController {
         throw new Error('')
       }
 
-      if (wallet.money_qty < serviceOrderSaved.total_value) {
+      if (wallet.money_qty < savedServiceOrder.total_value) {
         errorTypeTrack.status = 400
         errorTypeTrack.message = 'insuficient money'
         throw new Error('')
       }
 
-      wallet.money_qty -= serviceOrderSaved.total_value
+      wallet.money_qty -= savedServiceOrder.total_value
 
       wallet.useTransaction(trx)
 
       await wallet.save()
 
-      response.status(200).send(wallet)
+      response.status(200).send(savedServiceOrder)
     }).catch(() => {
       if (errorTypeTrack.status === 0) {
         return response.status(500)
