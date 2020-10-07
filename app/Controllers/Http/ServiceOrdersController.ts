@@ -60,6 +60,7 @@ export default class ServiceOrdersController {
   public async store ({ request, response }: HttpContextContract) {
     // define schema for the request params and validate
     const serviceOrderSchema = schema.create({
+      user_id: schema.number(),
       products: schema.array().members(schema.object().members({
         product_id: schema.number(),
         qty: schema.number(),
@@ -72,6 +73,10 @@ export default class ServiceOrdersController {
       status: 0,
       message: '',
     }
+
+    // sets user id to process his order
+    const userId = validatedData.user_id
+
     await Database.transaction(async (trx) => {
       // create order status
       const orderStatus = new OrderStatus()
@@ -83,6 +88,7 @@ export default class ServiceOrdersController {
       // service order opening
       const serviceOrder = new ServiceOrder()
       serviceOrder.orderStatusId = orderStatusSaved.id
+      serviceOrder.userId = userId
       serviceOrder.useTransaction(trx)
 
       const serviceOrderSaved = await serviceOrder.save()
@@ -130,7 +136,8 @@ export default class ServiceOrdersController {
       serviceOrderSaved.total_value = totalValue
       await serviceOrderSaved.save()
 
-      const wallet = await Wallet.findBy('id', 1)
+      // process payment
+      const wallet = await Wallet.findBy('user_id', userId)
 
       if (!wallet) {
         errorTypeTrack.status = 400
