@@ -21,9 +21,8 @@ export default class ServiceOrdersController {
     }
   }
 
-  public async index ({request, response}: HttpContextContract) {
+  public async index ({request, response, auth}: HttpContextContract) {
     const productsSchema = schema.create({
-      user_key: schema.string(),
       id: schema.number.optional(),
       page: schema.number.optional(),
       pagination: schema.number.optional([rules.range(2, 100)]),
@@ -34,7 +33,7 @@ export default class ServiceOrdersController {
     const validatedData = await request.validate({schema: productsSchema})
 
     // set default values and params
-    const user = await User.findBy('key', validatedData.user_key)
+    const user = await User.findBy('id', auth.user?.id)
 
     if (!user) {
       return response.status(401)
@@ -67,10 +66,9 @@ export default class ServiceOrdersController {
     return productQuery
   }
 
-  public async store ({ request, response }: HttpContextContract) {
+  public async store ({ request, response, auth}: HttpContextContract) {
     // define schema for the request params and validate
     const serviceOrderSchema = schema.create({
-      user_key: schema.number(),
       products: schema.array().members(schema.object().members({
         product_id: schema.number(),
         qty: schema.number(),
@@ -85,7 +83,7 @@ export default class ServiceOrdersController {
     }
 
     // sets user id to process his order
-    const user = await User.findBy('key', validatedData.user_key)
+    const user = await User.findBy('id', auth.user?.id)
     if (!user) {
       return response.status(401)
     }
