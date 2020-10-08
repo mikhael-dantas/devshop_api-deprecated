@@ -21,12 +21,14 @@
 import Route from '@ioc:Adonis/Core/Route'
 
 Route.get('/products', 'ProductsController.index')
-Route.post('/products', 'ProductsController.store')
-Route.put('/products/:id', 'ProductsController.index')
-Route.delete('/products/:id', 'ProductsController.index')
+Route.post('/products', 'ProductsController.store').middleware('auth')
+Route.put('/products/:id', 'ProductsController.index').middleware('auth')
+Route.delete('/products/:id', 'ProductsController.index').middleware('auth')
 
-Route.get('/serviceorders', 'ServiceOrdersController.index')
-Route.post('/serviceorders', 'ServiceOrdersController.store')
+Route.get('/serviceorders', 'ServiceOrdersController.index').middleware('auth')
+Route.post('/serviceorders', 'ServiceOrdersController.store').middleware('auth')
 
-Route.get('/users', 'UsersController.index')
+Route.get('/users', 'UsersController.index').middleware('auth')
 Route.post('/users', 'UsersController.store')
+
+Route.post('/sessions', 'SessionsController.store')
