@@ -32,3 +32,4 @@ Route.get('/users', 'UsersController.index').middleware('auth')
 Route.post('/users', 'UsersController.store')
 
 Route.post('/sessions', 'SessionsController.store')
+Route.delete('/sessions', 'SessionsController.delete')

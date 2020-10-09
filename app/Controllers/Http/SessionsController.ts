@@ -15,4 +15,14 @@ export default class SessionsController {
     })
     return response.send(token.toJSON())
   }
+
+  public async delete ({ auth, response }: HttpContextContract) {
+    await auth.use('api').logout()
+    const logout = await auth.check()
+    if (logout) {
+      return response.status(500).json({message: 'error ocurred in logout'})
+    }
+
+    return response.status(200)
+  }
 }
