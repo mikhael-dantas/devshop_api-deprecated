@@ -169,6 +169,11 @@ export default class ServiceOrdersController {
 
       await wallet.save()
 
+      orderStatusSaved.statusCode = 1
+
+      orderStatusSaved.useTransaction(trx)
+      await orderStatusSaved.save()
+
       response.status(200).send(savedServiceOrder)
     }).catch(() => {
       if (errorTypeTrack.status === 0) {
