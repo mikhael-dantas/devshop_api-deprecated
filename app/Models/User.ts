@@ -30,6 +30,9 @@ export default class User extends BaseModel {
   @column()
   public is_admin: boolean
 
+  @column()
+  public is_master: boolean
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 

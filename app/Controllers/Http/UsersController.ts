@@ -8,7 +8,11 @@ import Wallet from 'App/Models/Wallet'
 export default class UsersController {
   public async index ({auth}: HttpContextContract) {
     const userId = auth.user?.id
-    return await User.query().where({id: userId}).preload('wallet').preload('serviceOrder')
+    const user = await User.query().where({id: userId}).preload('wallet').preload('serviceOrder')
+    if (user[0].is_master) {
+      return await User.query().where({'is_admin': true}).preload('serviceOrder')
+    }
+    return user
   }
 
   public async store ({ request, response, auth }: HttpContextContract) {
@@ -46,8 +50,32 @@ export default class UsersController {
     })
 
     const token = await auth.use('api').attempt(validatedData.email, validatedData.password, {
-      expiresIn: '1 hour',
+      expiresIn: '18 hours',
     })
     return token.toJSON()
+  }
+
+  public async update ({auth, request, response}: HttpContextContract) {
+    const userId = auth.user?.id
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const {email} = request.only(['email'])
+    try {
+      const user = await User.findByOrFail('id', userId)
+      if (!user.is_master) {
+        throw new Error('')
+      }
+
+      const userToUpdate = await User.findBy('email', email)
+
+      if (!userToUpdate) {
+        return response.status(400).json({message: 'This user do not exist'})
+      }
+
+      userToUpdate.is_admin = !userToUpdate.is_admin
+
+      return await userToUpdate.save()
+    } catch (error) {
+      response.status(500).json({message: 'permission denied'})
+    }
   }
 }
