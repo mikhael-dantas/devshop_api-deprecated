@@ -3,6 +3,7 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 
 import Product from 'App/Models/Product'
+import User from 'App/Models/User'
 
 export default class ProductsController {
   private returnOrderString (order:any) {
@@ -55,7 +56,13 @@ export default class ProductsController {
     }
   }
 
-  public async store ({ request, response }: HttpContextContract) {
+  public async store ({ request, response, auth }: HttpContextContract) {
+    const userId = auth.user?.id
+    const user = await User.query().where({id: userId})
+    if (!user || !user[0].is_admin) {
+      return response.status(401)
+    }
+
     const productsSchema = schema.create({
       name: schema.string(),
       description: schema.string.optional(),
@@ -95,7 +102,13 @@ export default class ProductsController {
     return product
   }
 
-  public async update ({ request, response, params }: HttpContextContract) {
+  public async update ({ request, response, params, auth }: HttpContextContract) {
+    const userId = auth.user?.id
+    const user = await User.query().where({id: userId})
+    if (!user || !user[0].is_admin) {
+      return response.status(401)
+    }
+
     const {id} = params
 
     try {
@@ -166,7 +179,13 @@ export default class ProductsController {
     }
   }
 
-  public async delete ({ response, params }: HttpContextContract) {
+  public async delete ({ response, params, auth }: HttpContextContract) {
+    const userId = auth.user?.id
+    const user = await User.query().where({id: userId})
+    if (!user || !user[0].is_admin) {
+      return response.status(401)
+    }
+
     const {id} = params
 
     try {
