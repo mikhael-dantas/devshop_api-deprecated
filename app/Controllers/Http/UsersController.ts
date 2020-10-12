@@ -58,27 +58,53 @@ export default class UsersController {
   public async update ({auth, request, response}: HttpContextContract) {
     const userId = auth.user?.id
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const {email, money_to_add} = request.only(['email', 'money_to_add'])
+    const {email, money_to_add, is_admin} = request.only(['email', 'is_admin', 'money_to_add'])
     try {
       const user = await User.findByOrFail('id', userId)
       if (!user.is_master) {
         throw new Error('')
       }
 
+      // validations
       const userToUpdate = await User.findBy('email', email)
 
       if (!userToUpdate) {
         return response.status(400).json({message: 'This user do not exist'})
       }
 
-      if (money_to_add) {
-        userToUpdate.wallet.money_qty += money_to_add
+      if (!money_to_add && !is_admin) {
+        return response.status(400).send('no given instruction')
       }
-      userToUpdate.is_admin = !userToUpdate.is_admin
 
-      return await userToUpdate.save()
+      if (!email && typeof email !== 'string') {
+        return response.status(400).send('email string required')
+      }
+
+      if (money_to_add && typeof money_to_add !== 'number') {
+        return response.status(400).send('money_to_add must be a integer')
+      }
+
+      if (is_admin && typeof is_admin !== 'boolean') {
+        return response.status(400).send('is_admin must be a boolean')
+      }
+
+      // execution
+      if (money_to_add) {
+        const wallet = await Wallet.findBy('userId', userToUpdate.id)
+        if (!wallet) {
+          return response.status(400).send('wallet find error')
+        }
+        wallet.money_qty += money_to_add
+        return await wallet.save()
+      }
+
+      if (is_admin) {
+        userToUpdate.is_admin = is_admin
+      }
+
+      await userToUpdate.save()
     } catch (error) {
-      response.status(500).json({message: 'permission denied'})
+      return response.status(500).json({message: 'permission denied'})
     }
   }
 }
