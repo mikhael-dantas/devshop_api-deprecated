@@ -58,7 +58,7 @@ export default class UsersController {
   public async update ({auth, request, response}: HttpContextContract) {
     const userId = auth.user?.id
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const {email} = request.only(['email'])
+    const {email, money_to_add} = request.only(['email', 'money_to_add'])
     try {
       const user = await User.findByOrFail('id', userId)
       if (!user.is_master) {
@@ -71,6 +71,9 @@ export default class UsersController {
         return response.status(400).json({message: 'This user do not exist'})
       }
 
+      if (money_to_add) {
+        userToUpdate.wallet.money_qty += money_to_add
+      }
       userToUpdate.is_admin = !userToUpdate.is_admin
 
       return await userToUpdate.save()
