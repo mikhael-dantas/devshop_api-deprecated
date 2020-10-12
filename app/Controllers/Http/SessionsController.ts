@@ -1,3 +1,4 @@
+import Env from '@ioc:Adonis/Core/Env'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { schema } from '@ioc:Adonis/Core/Validator'
 
@@ -11,7 +12,7 @@ export default class SessionsController {
     const validatedData = await request.validate({schema: productsSchema})
 
     const token = await auth.use('api').attempt(validatedData.email, validatedData.password, {
-      expiresIn: '1 hour',
+      expiresIn: `${Env.get('USER_SESSION_EXP_TIME', '18')} hours`,
     })
     return response.send(token.toJSON())
   }
