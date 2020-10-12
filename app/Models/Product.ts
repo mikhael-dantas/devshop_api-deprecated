@@ -24,6 +24,9 @@ export default class Product extends BaseModel {
   @column()
   public details: string
 
+  @column()
+  public active: boolean
+
   @hasMany(() => OrderedProduct)
   public orderedProducts: HasMany<typeof OrderedProduct>
 

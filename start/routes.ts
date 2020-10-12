@@ -20,16 +20,17 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
-Route.get('/products', 'ProductsController.index')
-Route.post('/products', 'ProductsController.store').middleware('auth')
-Route.put('/products/:id', 'ProductsController.index').middleware('auth')
-Route.delete('/products/:id', 'ProductsController.index').middleware('auth')
-
-Route.get('/serviceorders', 'ServiceOrdersController.index').middleware('auth')
-Route.post('/serviceorders', 'ServiceOrdersController.store').middleware('auth')
+Route.post('/sessions', 'SessionsController.store')
+Route.delete('/sessions', 'SessionsController.delete')
 
 Route.get('/users', 'UsersController.index').middleware('auth')
 Route.post('/users', 'UsersController.store')
 
-Route.post('/sessions', 'SessionsController.store')
-Route.delete('/sessions', 'SessionsController.delete')
+Route.get('/products', 'ProductsController.index')
+Route.post('/products', 'ProductsController.store').middleware('auth')
+Route.put('/products/:id', 'ProductsController.update').middleware('auth')
+Route.delete('/products/:id', 'ProductsController.delete').middleware('auth')
+
+Route.get('/serviceorders', 'ServiceOrdersController.index').middleware('auth')
+Route.post('/serviceorders', 'ServiceOrdersController.store').middleware('auth')
+

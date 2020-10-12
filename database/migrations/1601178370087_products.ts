@@ -11,6 +11,7 @@ export default class Products extends BaseSchema {
       table.integer('price').notNullable().unsigned()
       table.integer('stock_qty').notNullable().unsigned()
       table.string('image_url').notNullable()
+      table.boolean('active').notNullable().defaultTo(true)
       table.string('details')
       table.timestamps(true)
     })
