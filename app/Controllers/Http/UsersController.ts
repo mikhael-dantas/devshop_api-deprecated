@@ -6,10 +6,11 @@ import User from 'App/Models/User'
 import Wallet from 'App/Models/Wallet'
 
 export default class UsersController {
-  public async index ({auth}: HttpContextContract) {
+  public async index ({auth, request }: HttpContextContract) {
     const userId = auth.user?.id
+    const {all} = request.only(['all'])
     const user = await User.query().where({id: userId}).preload('wallet').preload('serviceOrder')
-    if (user[0].is_master) {
+    if (user[0].is_master && all) {
       return await User.query().where({'is_admin': true}).preload('serviceOrder')
     }
     return user
