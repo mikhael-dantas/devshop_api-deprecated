@@ -40,7 +40,7 @@ export default class UsersController {
 
       // creating wallet
       const wallet = new Wallet()
-      wallet.money_qty = 10000
+      wallet.money_qty = 60000
       wallet.userId = savedUser.id
 
       wallet.useTransaction(trx)
