@@ -173,7 +173,7 @@ export default class ProductsController {
         return response.status(500).json({message: 'error saving'})
       }
 
-      return response.status(200).send(savedproduct.toJSON)
+      return response.status(200).send(savedproduct)
     } catch (error) {
       return response.status(400).json({message: 'product does not exist'})
     }
