@@ -16,7 +16,7 @@ export default class ProductsController {
         return 'asc'
     }
   }
-  public async index ({ request, response }: HttpContextContract) {
+  public async index ({ request, response, auth}: HttpContextContract) {
     try {
       const productsSchema = schema.create({
         id: schema.number.optional(),
@@ -43,10 +43,14 @@ export default class ProductsController {
         params['id'] = validatedData.id
       }
 
+      const wherenotParams = {}
+      if (!auth.user?.is_admin) {
+        wherenotParams['active'] = 0
+      }
       // query
       const productQuery = await Product.query()
         .where(params)
-        .whereNot({active: 0})
+        .whereNot(wherenotParams)
         .orderBy(validatedData.sort, this.returnOrderString(validatedData.order))
         .paginate(validatedData.page, validatedData.pagination)
 
