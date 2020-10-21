@@ -10,7 +10,7 @@ export default class ServiceOrders extends BaseSchema {
         .references('id')
         .inTable('order_statuses')
         .notNullable()
-      table.integer('total_value')
+      table.integer('total_value').unsigned()
       table.timestamps(true)
     })
   }
