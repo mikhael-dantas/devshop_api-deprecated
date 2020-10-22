@@ -43,18 +43,21 @@ export const ApiValidSchemas = {
 
   products: {
     get: schema.create({
-      id: schema.number.optional(),
-      page: schema.number.optional(),
-      pagination: schema.number.optional([rules.range(2, 100)]),
+      id: schema.number.optional([rules.integer]),
+      page: schema.number.optional([rules.integer]),
+      pagination: schema.number.optional([rules.range(2, 100), rules.integer]),
       order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
-      sort: schema.string.optional({}, [rules.regex(/^(price|name)$/), rules.requiredIfExists('order')]),
+      sort: schema.string.optional({}, [
+        rules.regex(/^(price|name)$/),
+        rules.requiredIfExists('order'),
+      ]),
     }),
 
     post: schema.create({
-      name: schema.string(),
+      name: schema.string({}, [rules.maxLength(255)]),
       description: schema.string.optional(),
-      price: schema.number(),
-      stock_qty: schema.number(),
+      price: schema.number([rules.integer, rules.range(0, 99999999)]),
+      stock_qty: schema.number([rules.integer, rules.range(0, 999999)]),
       image_url: schema.string(),
       active: schema.boolean(),
       details: schema.object.optional ([
@@ -63,10 +66,10 @@ export const ApiValidSchemas = {
     }),
 
     put: schema.create({
-      name: schema.string.optional(),
+      name: schema.string.optional({}, [rules.maxLength(255)]),
       description: schema.string.optional(),
-      price: schema.number.optional(),
-      stock_qty: schema.number.optional(),
+      price: schema.number.optional([rules.integer, rules.range(0, 99999999)]),
+      stock_qty: schema.number.optional([rules.integer, rules.range(0, 999999)]),
       image_url: schema.string.optional(),
       active: schema.boolean.optional(),
       details: schema.object.optional ([
