@@ -33,4 +33,45 @@ export const ApiValidSchemas = {
       ]),
     }),
   },
+
+  sessions: {
+    post: schema.create({
+      email: schema.string(),
+      password: schema.string(),
+    }),
+  },
+
+  products: {
+    get: schema.create({
+      id: schema.number.optional(),
+      page: schema.number.optional(),
+      pagination: schema.number.optional([rules.range(2, 100)]),
+      order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
+      sort: schema.string.optional({}, [rules.regex(/^(price|name)$/), rules.requiredIfExists('order')]),
+    }),
+
+    post: schema.create({
+      name: schema.string(),
+      description: schema.string.optional(),
+      price: schema.number(),
+      stock_qty: schema.number(),
+      image_url: schema.string(),
+      active: schema.boolean(),
+      details: schema.object.optional ([
+        rules.stringsOrNumbersObject(),
+      ]).anyMembers(),
+    }),
+
+    put: schema.create({
+      name: schema.string.optional(),
+      description: schema.string.optional(),
+      price: schema.number.optional(),
+      stock_qty: schema.number.optional(),
+      image_url: schema.string.optional(),
+      active: schema.boolean.optional(),
+      details: schema.object.optional ([
+        rules.stringsOrNumbersObject(),
+      ]).anyMembers(),
+    }),
+  },
 }

@@ -61,8 +61,6 @@ export default class UsersController {
 
       wallet.useTransaction(trx)
       await wallet.save()
-    }).catch((error) => {
-      return response.status(error.status)
     })
 
     // login for the created user
