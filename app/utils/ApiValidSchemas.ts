@@ -43,9 +43,9 @@ export const ApiValidSchemas = {
 
   products: {
     get: schema.create({
-      id: schema.number.optional([rules.integer]),
-      page: schema.number.optional([rules.integer]),
-      pagination: schema.number.optional([rules.range(2, 100), rules.integer]),
+      id: schema.number.optional([rules.integer()]),
+      page: schema.number.optional([rules.integer()]),
+      pagination: schema.number.optional([rules.range(2, 100), rules.integer()]),
       order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
       sort: schema.string.optional({}, [
         rules.regex(/^(price|name)$/),
@@ -56,25 +56,31 @@ export const ApiValidSchemas = {
     post: schema.create({
       name: schema.string({}, [rules.maxLength(255)]),
       description: schema.string.optional(),
-      price: schema.number([rules.integer, rules.range(0, 99999999)]),
-      stock_qty: schema.number([rules.integer, rules.range(0, 999999)]),
+      price: schema.number([rules.integer(), rules.range(0, 99999999)]),
+      stock_qty: schema.number([rules.integer(), rules.range(0, 999999)]),
       image_url: schema.string(),
       active: schema.boolean(),
-      details: schema.object.optional ([
-        rules.stringsOrNumbersObject(),
-      ]).anyMembers(),
+      details: schema.array.optional().members(
+        schema.object().members({
+          title: schema.string(),
+          detail: schema.string(),
+        })
+      ),
     }),
 
     put: schema.create({
       name: schema.string.optional({}, [rules.maxLength(255)]),
       description: schema.string.optional(),
-      price: schema.number.optional([rules.integer, rules.range(0, 99999999)]),
-      stock_qty: schema.number.optional([rules.integer, rules.range(0, 999999)]),
+      price: schema.number.optional([rules.integer(), rules.range(0, 99999999)]),
+      stock_qty: schema.number.optional([rules.integer(), rules.range(0, 999999)]),
       image_url: schema.string.optional(),
       active: schema.boolean.optional(),
-      details: schema.object.optional ([
-        rules.stringsOrNumbersObject(),
-      ]).anyMembers(),
+      details: schema.array.optional().members(
+        schema.object().members({
+          title: schema.string(),
+          detail: schema.string(),
+        })
+      ),
     }),
   },
 }

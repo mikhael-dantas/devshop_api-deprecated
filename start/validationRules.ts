@@ -10,26 +10,13 @@ validator.rule('integer', (value, _, { pointer, arrayExpressionPointer, errorRep
   }
 
   /**
+   * Parse phone number from a string
+   */
+
+  /**
    * Report error when phone number is not valid
    */
   if (!Number.isInteger(value)) {
     errorReporter.report(pointer, 'integer', 'Invalid integer', arrayExpressionPointer)
-  }
-})
-
-validator.rule('stringsOrNumbersObject', (value, _, { pointer, arrayExpressionPointer, errorReporter }) => {
-  if (typeof (value) !== 'object') {
-    return
-  }
-
-  let invalidCount = 0
-  Object.values(value).forEach(objectValue => {
-    if (!['number', 'string'].includes(typeof objectValue)) {
-      invalidCount += 1
-    }
-  })
-
-  if (invalidCount > 0) {
-    errorReporter.report(pointer, 'stringsOrNumbersObject', 'Invalid stringsOrNumbersObject', arrayExpressionPointer)
   }
 })

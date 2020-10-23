@@ -18,6 +18,7 @@
     {
       "file": "./start/validationRules",
       "environment": [
+        "console",
         "web"
       ]
     }
