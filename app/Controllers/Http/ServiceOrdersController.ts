@@ -1,5 +1,5 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import { schema , rules} from '@ioc:Adonis/Core/Validator'
+import { ApiValidSchemas } from '../../utils/ApiValidSchemas'
 
 import Database from '@ioc:Adonis/Lucid/Database'
 import OrderedProduct from 'App/Models/OrderedProduct'
@@ -22,23 +22,15 @@ export default class ServiceOrdersController {
   }
 
   public async index ({request, response, auth}: HttpContextContract) {
-    const productsSchema = schema.create({
-      id: schema.number.optional(),
-      page: schema.number.optional(),
-      pagination: schema.number.optional([rules.range(2, 100)]),
-      order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
-      sort: schema.string.optional({}, [rules.regex(/^(created_at|total_value)$/), rules.requiredIfExists('order')]),
-    })
-
-    const validatedData = await request.validate({schema: productsSchema})
-
-    // set default values and params
     const user = await User.findBy('id', auth.user?.id)
 
     if (!user) {
       return response.status(401)
     }
 
+    const validatedData = await request.validate({schema: ApiValidSchemas.serviceorders.get})
+
+    // set default values and params
     if (!validatedData.page) {
       validatedData.page = 1
     }
@@ -67,27 +59,20 @@ export default class ServiceOrdersController {
   }
 
   public async store ({ request, response, auth}: HttpContextContract) {
-    // define schema for the request params and validate
-    const serviceOrderSchema = schema.create({
-      products: schema.array().members(schema.object().members({
-        product_id: schema.number(),
-        qty: schema.number(),
-      })),
-    })
-
-    const validatedData = await request.validate({schema: serviceOrderSchema})
-
-    const errorTypeTrack = {
-      status: 0,
-      message: '',
-    }
-
-    // sets user id to process his order
     const user = await User.findBy('id', auth.user?.id)
     if (!user) {
       return response.status(401)
     }
+
     const userId = user.id
+
+    const validatedData = await request.validate({schema: ApiValidSchemas.serviceorders.post})
+
+    // start order creation
+    const errorSectionTrack = {
+      status: 0,
+      message: '',
+    }
 
     await Database.transaction(async (trx) => {
       // create order status
@@ -105,13 +90,13 @@ export default class ServiceOrdersController {
 
       const savedServiceOrder = await serviceOrder.save()
 
-      // calculate and create orderedProducts
+      // calculate total value and create orderedProducts
       let totalValue = 0
       await Promise.all(validatedData.products.map(async orderedProductData => {
         const product = await Product.findBy('id', orderedProductData.product_id)
         if (!product) {
-          errorTypeTrack.status = 400
-          errorTypeTrack.message = `id in product with id ${orderedProductData.product_id}`
+          errorSectionTrack.status = 400
+          errorSectionTrack.message = `id in product with id ${orderedProductData.product_id}`
           throw new Error('')
         }
         // increment totalvalue by the price times quantity
@@ -119,8 +104,8 @@ export default class ServiceOrdersController {
 
         // remove from stock
         if (product.stock_qty < orderedProductData.qty) {
-          errorTypeTrack.status = 400
-          errorTypeTrack.message = `qty in product with id ${orderedProductData.product_id}`
+          errorSectionTrack.status = 400
+          errorSectionTrack.message = `qty in product with id ${orderedProductData.product_id}`
           throw new Error('')
         }
 
@@ -152,14 +137,14 @@ export default class ServiceOrdersController {
       const wallet = await Wallet.findBy('user_id', userId)
 
       if (!wallet) {
-        errorTypeTrack.status = 400
-        errorTypeTrack.message = 'wallet do not exist'
+        errorSectionTrack.status = 400
+        errorSectionTrack.message = 'wallet do not exist'
         throw new Error('')
       }
 
       if (wallet.money_qty < savedServiceOrder.total_value) {
-        errorTypeTrack.status = 400
-        errorTypeTrack.message = 'insuficient money'
+        errorSectionTrack.status = 400
+        errorSectionTrack.message = 'insuficient money'
         throw new Error('')
       }
 
@@ -176,10 +161,10 @@ export default class ServiceOrdersController {
 
       response.status(200).send(savedServiceOrder)
     }).catch(() => {
-      if (errorTypeTrack.status === 0) {
+      if (errorSectionTrack.status === 0) {
         return response.status(500)
       }
-      return response.status(errorTypeTrack.status).json({message: errorTypeTrack.message})
+      return response.status(errorSectionTrack.status).json({message: errorSectionTrack.message})
     })
   }
 }

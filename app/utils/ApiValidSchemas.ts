@@ -83,4 +83,24 @@ export const ApiValidSchemas = {
       ),
     }),
   },
+
+  serviceorders: {
+    get: schema.create({
+      id: schema.number.optional([rules.integer()]),
+      page: schema.number.optional([rules.integer()]),
+      pagination: schema.number.optional([rules.integer(), rules.range(2, 100)]),
+      order: schema.string.optional({}, [rules.regex(/^(asc|desc)$/)]),
+      sort: schema.string.optional({}, [
+        rules.regex(/^(created_at|total_value)$/),
+        rules.requiredIfExists('order'),
+      ]),
+    }),
+
+    post: schema.create({
+      products: schema.array().members(schema.object().members({
+        product_id: schema.number([rules.integer()]),
+        qty: schema.number([rules.integer()]),
+      })),
+    }),
+  },
 }
