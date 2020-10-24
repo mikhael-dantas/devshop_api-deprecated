@@ -10,7 +10,7 @@ export default class OrderStatus extends BaseModel {
   public serviceOrder: HasOne<typeof ServiceOrder>
 
   @column()
-  public statusCode: number
+  public statusCode: string
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime

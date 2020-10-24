@@ -6,7 +6,7 @@ export default class OrderStatuses extends BaseSchema {
   public async up () {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').notNullable().unsigned()
-      table.integer('status_code').defaultTo(0).notNullable()
+      table.string('status_code').defaultTo('pending').notNullable()
       table.timestamps(true)
     })
   }
