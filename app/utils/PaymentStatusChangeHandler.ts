@@ -27,19 +27,3 @@ export default async function PaymentStatusChangeHandler (serviceOrderId: number
   return (await serviceOrder.save()).toJSON
 }
 
-// import Wallet from 'App/Models/Wallet'
-// const wallet = await Wallet.findBy('user_id', serviceOrder.userId)
-
-// if (!wallet) {
-//   throw new Error('')
-// }
-
-// if (wallet.money_qty < serviceOrder.total_value) {
-//   throw new Error('')
-// }
-
-// wallet.money_qty -= serviceOrder.total_value
-
-// wallet.useTransaction(trx)
-
-// await wallet.save()
