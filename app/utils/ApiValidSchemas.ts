@@ -103,4 +103,12 @@ export const ApiValidSchemas = {
       })),
     }),
   },
+
+  walletpayments: {
+    post: schema.create({
+      service_order_id: schema.number([
+        rules.integer(),
+      ]),
+    }),
+  },
 }
