@@ -18,17 +18,20 @@ export default class WalletPaymentsController {
     const wallet = await Wallet.findBy('user_id', loggedUser.id)
 
     if (!wallet) {
-      throw new Error('')
+      await PaymentStatusChangeHandler(validatedData.service_order_id, PaymentStatusCodes.failed)
+      return response.status(400).json({message: 'serviceorder not finded'})
     }
 
     const serviceOrder = await ServiceOrder.findBy('id', validatedData.service_order_id)
 
     if (!serviceOrder) {
-      throw new Error('')
+      await PaymentStatusChangeHandler(validatedData.service_order_id, PaymentStatusCodes.failed)
+      return response.status(400).json({message: 'serviceorder not finded'})
     }
 
     if (wallet.money_qty < serviceOrder.total_value) {
-      throw new Error('')
+      await PaymentStatusChangeHandler(validatedData.service_order_id, PaymentStatusCodes.failed)
+      return response.status(200)
     }
 
     wallet.money_qty -= serviceOrder.total_value
@@ -37,7 +40,8 @@ export default class WalletPaymentsController {
       await PaymentStatusChangeHandler(validatedData.service_order_id, PaymentStatusCodes.complete)
       return response.status(200)
     } else {
-      throw new Error('')
+      await PaymentStatusChangeHandler(validatedData.service_order_id, PaymentStatusCodes.failed)
+      return response.status(200)
     }
   }
 }
